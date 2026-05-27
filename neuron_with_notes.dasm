@@ -1,0 +1,183 @@
+// INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
+//
+// Copyright © 2022-2024 Intel Corporation.
+//
+// This software and the related documents are Intel copyrighted
+// materials, and your use of them is governed by the express
+// license under which they were provided to you (License). Unless
+// the License provides otherwise, you may not use, modify, copy,
+// publish, distribute, disclose or transmit  this software or the
+// related documents without Intel's prior written permission.
+//
+// This software and the related documents are provided as is, with
+// no express or implied warranties, other than those that are
+// expressly stated in the License.
+
+// Describes how the thread is started and stopped
+.RmwCA=1
+.RmwDA=0
+.RdcDA=1
+.StrideCA=1
+.StrideDA=4
+.StrideSA=4
+.StridePA=0
+
+// Constants which must be defined and //compiled into the program
+.constant:DEST_FLAG    //0b01000000
+.constant:START_FLAG   //0b10000000
+.constant:FWD_INC_DONE //0b00100000
+.constant:BKWD_RD_DONE //0b00010000
+// Reset signal signal is in last bit of status_reg (0b00000001)
+// Deactivation signal is in 4 bit from the end  of status_reg (0b00001000)
+// The reset signal is encoded as 0b00111000 in the status_reg (56 in decimal)
+// Aliases for variables
+// t0ls has da at the start of the update pass
+// and spike payload at the end of the pass
+// Can dat_in_fwd and dat_in_bwd be just
+// 8 bits instead of 24?
+
+// r/s (0address, byte-addressed)  b(8 bits) w(16bits) l(24 bits) u/s(signed/unsigned) - just 1 timestep, then they are reset
+// t register - read and write spikes
+// spike out in t0 - whatever is in t0,1,2 is emitted as spike + (some bits for timing)
+
+
+.var:a_in@t0ls
+.var:status_flag@r0bu
+.var:dat_in_fwd@s0bs
+.var:dat_in_bwd@s1bs
+.var:dat_in_dist@s2lu
+.var:temp_status@r1bu
+.var:payload@t0ls
+
+// Compartment mem
+// each CA has 64 bits
+
+.mem:CA[0]{
+wu global_depth; // init to 0
+wu counter_mem;  // init to 0
+bu status_reg; // can be set by user through var or spk_i
+wu global_counter;
+bu spk_trace;
+}
+
+
+:read_spk_i
+rmw_ca 0 // allows cx_state[0] access for next pass 
+cmp_skp_eq 5 a_in 0
+// reset value
+mov counter_mem 0
+mov global_depth 0
+mov global_counter 0
+mov spk_trace 0
+mov status_reg a_in
+rdc_da 1
+next
+
+:read_dist_spike
+rmw_ca 0 // allows cx_state[0] access for next pass
+mov dat_in_dist a_in
+// check for reset signal
+// cmp_skp_ne 4 a_in -1
+// mov counter_mem 0
+// mov global_depth 0
+// mov global_counter 0
+// mov spk_trace 0 
+cmp_skp_eq 2 dat_in_dist 0 
+mov global_depth dat_in_dist
+jmp first_backward_spike
+rdc_da 2
+next
+
+: read_bwd_spike_and_start_bwd_phase 
+rmw_ca 0 // allows cx_state[0] access for next pass
+mov dat_in_bwd a_in
+// jmp to backward phase for the first time as soon as 
+// global depth is recd
+// if destination reached global depth is 
+// going to be greater than 0
+cmp_skp_eq 3 global_depth 0 
+add_sat counter_mem 1
+cmp_skp_eq 1 dat_in_bwd 0
+jmp bwd_phase_remaining
+rdc_da 3
+next 
+
+:read_fwd_spike_and_start_fwd_phase
+rmw_ca 0 // allows cx_state[0] access for next pass
+add_sat global_counter 1
+mov dat_in_fwd a_in
+// increment counter only in case of 
+// Non-zero fwd_spk
+cmp_skp_eq 5 dat_in_fwd 0
+// don’t increment counter if already 
+// incremented due to fwd_spk before
+mov temp_status status_reg
+and temp_status FWD_INC_DONE 
+cmp_skp_ne 1 temp_status FWD_INC_DONE 
+end
+next
+
+:fwd_phase_remaining_1
+rmw_ca 0 // allows cx_state[0] access for next pass
+mov counter_mem global_counter
+or status_reg FWD_INC_DONE 
+mov temp_status status_reg 
+and temp_status DEST_FLAG
+next
+
+:fwd_phase_remaining_2
+cmp_skp_ne 4 temp_status DEST_FLAG
+// can also directly spike out counter_mem instead of moving it to global_depth
+// and spiking it out
+mov global_depth counter_mem 
+mov payload global_depth
+spike 1  //AX_integ (s_out_2)
+end
+mov payload 1
+spike 3   //AX_fwd (s_out_4)
+end
+
+:first_backward_spike
+rmw_ca 0
+mov temp_status status_reg 
+and temp_status DEST_FLAG
+cmp_skp_ne 4 temp_status DEST_FLAG
+or status_reg BKWD_RD_DONE 
+mov payload 1
+spike 2  //AX_bwd (s_out_3)
+// maybe jmp to readout
+jmp readout
+end
+
+:bwd_phase_remaining
+rmw_ca 0
+mov temp_status status_reg
+// indicates neuron  has spiked its ID 
+// already and should not spike backward 
+// anymore or send its ID
+and temp_status BKWD_RD_DONE 
+cmp_skp_eq 4 temp_status BKWD_RD_DONE 
+// spike backward only if counter_mem is   
+// equal to global_depth. Otherwse avoid  
+// wasteful backward spiking.
+cmp_skp_ne 3 counter_mem global_depth
+mov payload 1
+spike 2   //AX_bwd (s_out_3)
+next
+end
+
+// End of search signalled by  spiking to 
+// spike_o. Start and dest 
+// neurons don’t spike to spk_o since it’s
+// obvious they are part of the solution
+//mov temp_status status_reg
+//and temp_status START_FLAG
+//cmp_skp_eq 2 temp_status START_FLAG 
+:readout
+or status_reg BKWD_RD_DONE 
+add_sat spk_trace 1
+//mov spk_trace counter_mem
+mov payload 1
+spike 0 //AX_spk_o (s_out_1)
+//ID send to spk_o for this neuron
+end

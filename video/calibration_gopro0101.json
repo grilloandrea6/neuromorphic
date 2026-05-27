@@ -1,0 +1,173 @@
+{
+  "description": "Generated from clicked points on the projected reference circle.",
+  "crop": null,
+  "start_offset_s": 3.4,
+  "reference_marker_advance_s": 0.25,
+  "anchors": [
+    {
+      "world_xy_m": [
+        0.6,
+        -0.35
+      ],
+      "pixel_xy": [
+        1496.652,
+        729.089
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.58097,
+        -0.254329
+      ],
+      "pixel_xy": [
+        1485.054,
+        670.782
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.526777,
+        -0.173223
+      ],
+      "pixel_xy": [
+        1452.025,
+        621.351
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.445671,
+        -0.11903
+      ],
+      "pixel_xy": [
+        1402.595,
+        588.322
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.35,
+        -0.1
+      ],
+      "pixel_xy": [
+        1344.287,
+        576.724
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.254329,
+        -0.11903
+      ],
+      "pixel_xy": [
+        1285.98,
+        588.322
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.173223,
+        -0.173223
+      ],
+      "pixel_xy": [
+        1236.549,
+        621.351
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.11903,
+        -0.254329
+      ],
+      "pixel_xy": [
+        1203.52,
+        670.782
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.1,
+        -0.35
+      ],
+      "pixel_xy": [
+        1191.922,
+        729.089
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.11903,
+        -0.445671
+      ],
+      "pixel_xy": [
+        1203.52,
+        787.397
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.173223,
+        -0.526777
+      ],
+      "pixel_xy": [
+        1236.549,
+        836.828
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.254329,
+        -0.58097
+      ],
+      "pixel_xy": [
+        1285.98,
+        869.856
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.35,
+        -0.6
+      ],
+      "pixel_xy": [
+        1344.287,
+        881.454
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.445671,
+        -0.58097
+      ],
+      "pixel_xy": [
+        1402.595,
+        869.856
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.526777,
+        -0.526777
+      ],
+      "pixel_xy": [
+        1452.025,
+        836.828
+      ]
+    },
+    {
+      "world_xy_m": [
+        0.58097,
+        -0.445671
+      ],
+      "pixel_xy": [
+        1485.054,
+        787.397
+      ]
+    }
+  ],
+  "notes": [
+    "Circle calibration assumes the camera view is top-down enough that the reference circle remains a circle.",
+    "Default axis convention is world +x to image right and world +y to image up.",
+    "If the preview is mirrored or rotated, regenerate with --circle-calibration-flip-x, --circle-calibration-flip-y, or --circle-calibration-axis-angle-deg."
+  ]
+}

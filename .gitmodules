@@ -1,0 +1,9 @@
+[submodule "admm_nxcore"]
+	path = admm_nxcore
+	url = git@github.com:grilloandrea6/admm_nxcore.git
+[submodule "crazyflie-lib-python"]
+	path = crazyflie-lib-python
+	url = git@github.com:bitcraze/crazyflie-lib-python.git
+[submodule "ros2-crazyflie-mocap"]
+	path = ros2-crazyflie-mocap
+	url = git@github.com:A2R-Lab/ros2-crazyflie-mocap.git
